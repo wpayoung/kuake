@@ -5,7 +5,7 @@
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Wpayoung\\Kuake\\": "src/Kuake/Library"
+            "Kuake\\Library\\": "src/Kuake/Library"
         }
     },
     "authors": [
