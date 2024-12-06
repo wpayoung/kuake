@@ -1,0 +1,19 @@
+{
+    "name": "wpayoung/kuake",
+    "description": "某个网盘的包",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Wpayoung\\Kuake\\": "src/Kuake/Library"
+        }
+    },
+    "authors": [
+        {
+            "name": "youngs",
+            "email": "wpayoung@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}
