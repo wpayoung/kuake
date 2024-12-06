@@ -1,11 +1,11 @@
 {
     "name": "wpayoung/kuake",
-    "description": "某个网盘的包",
+    "description": "某盘的工具",
     "type": "library",
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Kuake\\Library\\": "src/Kuake/Library"
+            "Wpayoung\\Kuake\\": "src/"
         }
     },
     "authors": [

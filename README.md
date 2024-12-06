@@ -1,1 +1,0 @@
-kuake readme
