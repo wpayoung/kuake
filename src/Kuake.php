@@ -3,6 +3,8 @@
 namespace Wpayoung\Kuake;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\ServerException;
 
 class Kuake
 {
@@ -59,6 +61,17 @@ class Kuake
         return $err_arr;
     }
 
+    /**
+     * 获取会员信息
+     * @return mixed 这个接口有会员到期时间、使用了多少容量，最大容量有多少
+     */
+    public function getMember()
+    {
+        $api = 'https://pan.quark.cn/account/info?fr=pc&platform=pc&__dt=1394&__t=' . time() . rand(1000, 9999);
+        $result = $this->get($api, ['headers' => ['cookie' => $this->cookie]]);
+        $err_arr = json_decode($result->getBody()->getContents(), true);
+        return $err_arr;
+    }
 
     /**
      * 获取token 打开分享链接时
@@ -105,9 +118,9 @@ class Kuake
      * @param string 请求写死了，也就排序和写目录长短翻页,是否获取子目录
      * @return mixed ['data'=>['list'=>['fid'=>'文件id','file_name'=>'文件名']]] 其他自行理解
      */
-    public function getSort()
+    public function getSort($fid = 0, $page = 1, $page_size = 100)
     {
-        $api = 'https://drive-pc.quark.cn/1/clouddrive/file/sort?pr=ucpro&fr=pc&uc_param_str=&pdir_fid=0&_page=1&_size=100&_fetch_total=false&_fetch_sub_dirs=2&_sort=&__dt=1393&__t=' . time() . '1234';
+        $api = "https://drive-pc.quark.cn/1/clouddrive/file/sort?pr=ucpro&fr=pc&uc_param_str=&pdir_fid={$fid}&_page={$page}&_size={$page_size}&_fetch_total=false&_fetch_sub_dirs=2&_sort=&__dt=1393&__t=" . time() . '1234';
         $result = $this->client->get($api, ['headers' => ['cookie' => $this->cookie]]);
         $err_arr = json_decode($result->getBody()->getContents(), true);
         return $err_arr;
@@ -250,8 +263,132 @@ class Kuake
         $result = $this->client->post($api, ['headers' => $header, 'body' => json_encode($param)]);
 
         $err_arr = json_decode($result->getBody()->getContents(), true);
+        $err_arr['headers'] = $result->getHeaders()['Set-Cookie'];
         return $err_arr;
     }
 
+
+    /**
+     * 重命名
+     * @param $fid 要重命名的fid
+     * @param $name 重命名后的名字
+     * @return mixed
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function renew($fid, $name)
+    {
+        try {
+
+            $api = 'https://drive-pc.quark.cn/1/clouddrive/file/rename?pr=ucpro&fr=pc';
+            $param = [
+                'fid' => $fid,
+                'file_name' => $name
+            ];
+            $header = ['cookie' => $this->cookie, 'Content-Type' => 'application/json'];
+            $result = $this->client->post($api, ['headers' => $header, 'body' => json_encode($param)]);
+            $err_arr = json_decode($result->getBody()->getContents(), true);
+            return $err_arr;
+        } catch (RequestException $e) {
+            // 处理请求过程中发生的异常
+            if ($e->hasResponse()) {
+                return json_decode($e->getResponse()->getBody());
+            }
+        }
+    }
+
+
+    /**
+     * 复制
+     * @param $to_pdir_fid string 保存到的目录
+     * @param array $filelist 复制的文件或目录id 数组
+     * @param int $action_type 未知
+     * @param int $copy_source 未知
+     * @return mixed
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function copy($to_pdir_fid = '', $filelist = [], $action_type = 2, $copy_source = 1)
+    {
+        try {
+            $api = 'https://drive-pc.quark.cn/1/clouddrive/file/copy?pr=ucpro&fr=pc';
+            $param = [
+                'to_pdir_fid' => $to_pdir_fid,
+                'filelist' => is_array($filelist) ? $filelist : [$filelist],
+                'action_type' => $action_type,
+                'copy_source' => $copy_source
+            ];
+            $header = ['cookie' => $this->cookie, 'Content-Type' => 'application/json'];
+            $result = $this->client->post($api, ['headers' => $header, 'body' => json_encode($param)]);
+            $err_arr = json_decode($result->getBody()->getContents(), true);
+            return $err_arr;
+        } catch (RequestException $e) {
+            // 处理请求过程中发生的异常
+            if ($e->hasResponse()) {
+                return json_decode($e->getResponse()->getBody());
+            }
+        }
+    }
+
+
+    /**
+     * 删除
+     * @param array $filelist 要删除的fid
+     * @param int $action_type
+     * @param int $exclude_fids
+     * @return mixed
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function delete($filelist = [], $action_type = 2, $exclude_fids = 1)
+    {
+        try {
+            $api = 'https://drive-pc.quark.cn/1/clouddrive/file/copy?pr=ucpro&fr=pc';
+            $param = [
+
+                'filelist' => is_array($filelist) ? $filelist : [$filelist],
+                'action_type' => $action_type,
+                'exclude_fids' => $exclude_fids
+            ];
+            $header = ['cookie' => $this->cookie, 'Content-Type' => 'application/json'];
+            $result = $this->client->post($api, ['headers' => $header, 'body' => json_encode($param)]);
+            $err_arr = json_decode($result->getBody()->getContents(), true);
+            return $err_arr;
+        } catch (RequestException $e) {
+            // 处理请求过程中发生的异常
+            if ($e->hasResponse()) {
+                return json_decode($e->getResponse()->getBody());
+            }
+        }
+    }
+
+
+    /**
+     * 剪切粘贴
+     * @param string $to_pdir_fid 存放目录
+     * @param array $filelist 剪切的文件或目录fid
+     * @param int $action_type 未知
+     * @param array $exclude_fids 未知
+     * @return mixed
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function move($to_pdir_fid = '', $filelist = [], $action_type = 1, $exclude_fids = [])
+    {
+        try {
+            $api = 'https://drive-pc.quark.cn/1/clouddrive/file/copy?pr=ucpro&fr=pc';
+            $param = [
+                'to_pdir_fid' => $to_pdir_fid,
+                'filelist' => is_array($filelist) ? $filelist : [$filelist],
+                'action_type' => $action_type,
+                'exclude_fids' => $exclude_fids
+            ];
+            $header = ['cookie' => $this->cookie, 'Content-Type' => 'application/json'];
+            $result = $this->client->post($api, ['headers' => $header, 'body' => json_encode($param)]);
+            $err_arr = json_decode($result->getBody()->getContents(), true);
+            return $err_arr;
+        } catch (RequestException $e) {
+            // 处理请求过程中发生的异常
+            if ($e->hasResponse()) {
+                return json_decode($e->getResponse()->getBody());
+            }
+        }
+    }
 
 }
